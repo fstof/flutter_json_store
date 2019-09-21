@@ -17,7 +17,8 @@ In your flutter project add the dependency:
 ```
 dependencies:
   ...
-  json_store: ^0.0.1
+  json_store:
+  ...
 ```
 
 For help getting started with Flutter, view the online [documentation](https://flutter.dev).
