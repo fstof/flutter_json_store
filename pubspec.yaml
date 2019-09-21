@@ -1,6 +1,6 @@
 name: json_store
 description: A Flutter storage solution somewhat similar to a browser's localStorage (but super powered)
-version: 1.0.1
+version: 1.0.1+1
 author: Frans Stofberg <stofberg.dev@gmail.com>
 homepage: https://github.com/fstof/flutter_json_store
 
