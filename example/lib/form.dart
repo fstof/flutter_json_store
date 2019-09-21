@@ -22,7 +22,7 @@ class FormSample extends StatefulWidget {
 
 class _FormSampleState extends State<FormSample> {
   UserModel _user = UserModel();
-  JsonStore _jsonStore = JsonStore();
+  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();

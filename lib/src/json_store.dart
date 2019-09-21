@@ -25,20 +25,20 @@ class JsonStore {
   static const String _encryptedKey = 'encrypted';
   static const bool encryptByDefault = false;
 
-  JsonStore._createInstance(Database database, bool inMemory) {
+  JsonStore._createInstance(Database database, String dbName, bool inMemory) {
     _secureStorage = SecureStorage();
 
     if (database != null) {
       _databaseFuture = Future.value(database);
     }
     if (_databaseFuture == null) {
-      _databaseFuture = _initialiseDatabase(inMemory);
+      _databaseFuture = _initialiseDatabase(dbName, inMemory);
     }
   }
 
-  factory JsonStore({Database database, bool inMemory = false}) {
+  factory JsonStore({Database database, String dbName = 'json_store', bool inMemory = false}) {
     if (_instance == null) {
-      _instance = JsonStore._createInstance(database, inMemory);
+      _instance = JsonStore._createInstance(database, dbName, inMemory);
     }
     return _instance;
   }
@@ -48,7 +48,7 @@ class JsonStore {
     await db.delete(_table);
   }
 
-  Future<Database> _initialiseDatabase(bool inMemory) async {
+  Future<Database> _initialiseDatabase(String dbName, bool inMemory) async {
     if (inMemory) {
       return openDatabase(
         inMemoryDatabasePath,
@@ -58,7 +58,7 @@ class JsonStore {
     }
     final Directory path = await getApplicationDocumentsDirectory();
     return openDatabase(
-      '${path.path}/json_store.db',
+      '${path.path}/$dbName.db',
       version: 1,
       onCreate: _createDb,
     );

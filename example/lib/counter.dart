@@ -16,7 +16,7 @@ class CounterSample extends StatefulWidget {
 
 class _CounterSampleState extends State<CounterSample> {
   CounterModel _counter = CounterModel(0);
-  JsonStore _jsonStore = JsonStore();
+  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   @override
   void initState() {

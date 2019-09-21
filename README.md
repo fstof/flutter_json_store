@@ -25,6 +25,8 @@ For help getting started with Flutter, view the online [documentation](https://f
 ## Usage example
 See example folder for full sample app
 
+> Note: `JsonStore` is a singleton and instantiating with factory constructor `JsonStore()` will only ever have one instance
+
 ### Simple example
 ```dart
 import 'package:json_store/json_store.dart';

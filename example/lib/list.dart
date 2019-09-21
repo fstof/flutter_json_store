@@ -29,7 +29,7 @@ class ListSample extends StatefulWidget {
 
 class _ListSampleState extends State<ListSample> {
   List<Message> _messages = [];
-  JsonStore _jsonStore = JsonStore();
+  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   Random _random = Random();
 

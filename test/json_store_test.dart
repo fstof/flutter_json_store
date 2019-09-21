@@ -4,7 +4,7 @@ import 'package:json_store/json_store.dart';
 void main() {
   test('set and get an item', () async {
     // TODO: still need to do the unit tests. Probably needs to be integration test as the dependencies need a device
-    final jsonStore = JsonStore();
+    final jsonStore = JsonStore(dbName: 'testapp');
     try {
       await jsonStore.setItem('key', {'some': 'value'});
 

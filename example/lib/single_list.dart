@@ -27,7 +27,7 @@ class SingleListSample extends StatefulWidget {
 
 class _SingleListSampleState extends State<SingleListSample> {
   List<Message> _messages = [];
-  JsonStore _jsonStore = JsonStore();
+  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   Random _random = Random();
 
