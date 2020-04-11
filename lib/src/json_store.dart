@@ -176,7 +176,7 @@ class JsonStore {
       } else {
         final String value = row['value'];
         final bool encrypted = metadata[_encryptedKey] as bool;
-        if (encrypted && metadata[_ivKey]) {
+        if (encrypted && metadata[_ivKey] != null) {
           final IV iv = IV.fromBase64(metadata[_ivKey]);
           return await _decodeJson(value, encrypted, iv);
         } else {
@@ -216,7 +216,7 @@ class JsonStore {
           return null;
         } else {
           final encrypted = metadata[_encryptedKey] as bool;
-          if (encrypted && metadata[_ivKey]) {
+          if (encrypted && metadata[_ivKey] != null) {
             final IV iv = IV.fromBase64(metadata[_ivKey]);
             result.add(
               await _decodeJson(value, encrypted, iv),
