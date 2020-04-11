@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:core';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:encrypt/encrypt.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,16 +12,19 @@ import 'store_exception.dart';
 class JsonStore {
   static JsonStore _instance;
 
-  static Random _random;
   static SecureStorage _secureStorage;
   static Future<Database> _databaseFuture;
   static Encrypter _encrypter;
   static Key _key;
   static IV _iv;
 
+  static const IV_LENGTH = 8;
+  static const KEY_LENGTH = 32;
+
   static const String _table = 'json_store';
   static const String _timeToLiveKey = 'ttl';
   static const String _encryptedKey = 'encrypted';
+  static const String _ivKey = 'iv';
   static const bool encryptByDefault = false;
 
   JsonStore._createInstance(Database database, String dbName, bool inMemory) {
@@ -101,17 +103,21 @@ class JsonStore {
     Batch batch,
   }) async {
     try {
+      IV iv;
+      if (encrypt) {
+        iv = IV.fromSecureRandom(IV_LENGTH);
+      }
       final metadata = {
         _timeToLiveKey: timeToLive.inMilliseconds,
         _encryptedKey: encrypt,
+        _ivKey: (encrypt ? iv.base64 : null),
       };
       bool doCommit = false;
       if (batch == null) {
         doCommit = true;
         batch = await startBatch();
       }
-
-      final jsonString = await _encodeJson(value, encrypt);
+      final jsonString = await _encodeJson(value, encrypt, iv);
       _upsert(batch, key, jsonString, metadata);
 
       if (doCommit) {
@@ -170,8 +176,12 @@ class JsonStore {
       } else {
         final String value = row['value'];
         final bool encrypted = metadata[_encryptedKey] as bool;
-
-        return await _decodeJson(value, encrypted);
+        if (encrypted && metadata[_ivKey] != null) {
+          final IV iv = IV.fromBase64(metadata[_ivKey]);
+          return await _decodeJson(value, encrypted, iv);
+        } else {
+          return await _decodeJson(value, encrypted, null);
+        }
       }
     }
     return null;
@@ -206,9 +216,16 @@ class JsonStore {
           return null;
         } else {
           final encrypted = metadata[_encryptedKey] as bool;
-          result.add(
-            await _decodeJson(value, encrypted),
-          );
+          if (encrypted && metadata[_ivKey] != null) {
+            final IV iv = IV.fromBase64(metadata[_ivKey]);
+            result.add(
+              await _decodeJson(value, encrypted, iv),
+            );
+          } else {
+            result.add(
+              await _decodeJson(value, encrypted, null),
+            );
+          }
         }
       });
       return result;
@@ -238,11 +255,14 @@ class JsonStore {
     );
   }
 
-  Future<String> _encodeJson(Map<String, dynamic> value, bool encrypt) async {
+  Future<String> _encodeJson(Map<String, dynamic> value, bool encrypt, IV iv) async {
     if (encrypt) {
+      if (iv == null) {
+        iv = await _getGlobalIV();
+      }
       Encrypted encryptedValue = (await _getEncrypter()).encrypt(
         json.encode(value),
-        iv: await _getIV(),
+        iv: iv,
       );
       return encryptedValue.base16;
     }
@@ -250,11 +270,14 @@ class JsonStore {
     return json.encode(value);
   }
 
-  Future<dynamic> _decodeJson(String value, bool encrypted) async {
+  Future<dynamic> _decodeJson(String value, bool encrypted, IV iv) async {
     if (encrypted) {
+      if (iv == null) {
+        iv = await _getGlobalIV();
+      }
       String decryptedValue = (await _getEncrypter()).decrypt(
         Encrypted.fromBase16(value),
-        iv: await _getIV(),
+        iv: iv,
       );
       return json.decode(decryptedValue);
     }
@@ -273,41 +296,38 @@ class JsonStore {
     if (_key == null) {
       final keyMap = await _secureStorage.get('encryption_key');
       if (keyMap == null) {
-        String keyString = _randomString(32);
-        await _secureStorage.set('encryption_key', {'value': keyString});
-        _key = Key.fromUtf8(keyString);
+        _key = Key.fromSecureRandom(KEY_LENGTH);
+        await _secureStorage.set('encryption_key', {'value': _key.base64});
       } else {
-        _key = Key.fromUtf8(keyMap['value']);
+        String value = keyMap['value'];
+        // For backward compatibility
+        if (value.length == 32) {
+          _key = Key.fromUtf8(value);
+        } else {
+          _key = Key.fromBase64(value);
+        }
       }
     }
     return _key;
   }
 
-  Future<IV> _getIV() async {
+  Future<IV> _getGlobalIV() async {
     if (_iv == null) {
       final ivMap = await _secureStorage.get('encryption_iv');
       if (ivMap == null) {
-        String ivString = _randomString(8);
-        await _secureStorage.set('encryption_iv', {'value': ivString});
-        _iv = IV.fromUtf8(ivString);
+        IV iv = IV.fromSecureRandom(IV_LENGTH);
+        await _secureStorage.set('encryption_iv', {'value': iv.base64});
+        _iv = iv;
       } else {
-        _iv = IV.fromUtf8(ivMap['value']);
+        String value = ivMap['value'];
+        // For backward compatibility
+        if (value.length == 8) {
+          _iv = IV.fromUtf8(value);
+        } else {
+          _iv = IV.fromBase64(value);
+        }
       }
     }
     return _iv;
-  }
-
-  static const _chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-
-  String _randomString(int strlen) {
-    if (_random == null) {
-      // Random rnd = Random(DateTime.now().millisecondsSinceEpoch);
-      _random = Random.secure();
-    }
-    String result = "";
-    for (var i = 0; i < strlen; i++) {
-      result += _chars[_random.nextInt(_chars.length)];
-    }
-    return result;
   }
 }
