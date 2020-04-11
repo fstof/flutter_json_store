@@ -1,7 +1,11 @@
-## [1.0.3] - 2020-04-10
+## [1.0.3] - 2020-04-11
 
 - Update dependencies
-- Update example to use androidx
+- Update example to use AndroidX
+- Improve security
+  - Use fromSecureRandom() to get better random bytes for key and IV
+  - Use different IV for each row
+  - Backward compatability should be entact
 
 ## [1.0.2] - 2019-11-11
 
