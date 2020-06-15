@@ -1,3 +1,8 @@
+## [1.1.0] - 2020-06-15
+
+- Update dependencies
+- Add `deleteLike` to delete items with similar keys
+
 ## [1.0.3] - 2020-04-11
 
 - Update dependencies

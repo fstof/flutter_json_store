@@ -38,7 +38,10 @@ class JsonStore {
     }
   }
 
-  factory JsonStore({Database database, String dbName = 'json_store', bool inMemory = false}) {
+  factory JsonStore(
+      {Database database,
+      String dbName = 'json_store',
+      bool inMemory = false}) {
     if (_instance == null) {
       _instance = JsonStore._createInstance(database, dbName, inMemory);
     }
@@ -136,6 +139,24 @@ class JsonStore {
     }
 
     _delete(batch, key);
+
+    if (doCommit) {
+      await commitBatch(batch);
+    }
+  }
+
+  Future<void> deleteLike(String key, {Batch batch}) async {
+    bool doCommit = false;
+    if (batch == null) {
+      doCommit = true;
+      batch = await startBatch();
+    }
+
+    batch.delete(
+      _table,
+      where: 'key like ?',
+      whereArgs: [key],
+    );
 
     if (doCommit) {
       await commitBatch(batch);
@@ -255,7 +276,8 @@ class JsonStore {
     );
   }
 
-  Future<String> _encodeJson(Map<String, dynamic> value, bool encrypt, IV iv) async {
+  Future<String> _encodeJson(
+      Map<String, dynamic> value, bool encrypt, IV iv) async {
     if (encrypt) {
       if (iv == null) {
         iv = await _getGlobalIV();

@@ -55,6 +55,11 @@ class _ListSampleState extends State<ListSample> {
     }
   }
 
+  _deleteFromStorage() async {
+    await _jsonStore.deleteLike('messages-%');
+    await _loadFromStorage();
+  }
+
   _saveToStorageWithBatch() async {
     var start = DateTime.now().millisecondsSinceEpoch;
     // It's always better to use the Batch in this case as its way more performant
@@ -113,6 +118,11 @@ class _ListSampleState extends State<ListSample> {
                 RaisedButton(
                   child: Text('Load'),
                   onPressed: _loadFromStorage,
+                ),
+                SizedBox(width: 8),
+                RaisedButton(
+                  child: Text('Delete'),
+                  onPressed: _deleteFromStorage,
                 ),
                 SizedBox(width: 8),
                 RaisedButton(
