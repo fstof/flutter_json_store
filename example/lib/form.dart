@@ -22,7 +22,6 @@ class FormSample extends StatefulWidget {
 
 class _FormSampleState extends State<FormSample> {
   UserModel _user = UserModel();
-  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
@@ -34,7 +33,7 @@ class _FormSampleState extends State<FormSample> {
   }
 
   _loadFromStorage() async {
-    Map<String, dynamic> json = await _jsonStore.getItem('user');
+    Map<String, dynamic> json = await JsonStore().getItem('user');
     _user = json != null ? UserModel.fromJson(json) : UserModel();
     _emailController.text = _user.email;
     _passwordController.text = _user.password;
@@ -44,7 +43,11 @@ class _FormSampleState extends State<FormSample> {
   _saveToStorage() async {
     _user.email = _emailController.text;
     _user.password = _passwordController.text;
-    await _jsonStore.setItem('user', _user.toJson());
+    await JsonStore().setItem(
+      'user',
+      _user.toJson(),
+      timeToLive: Duration(seconds: 10),
+    );
     setState(() {});
   }
 
@@ -55,6 +58,10 @@ class _FormSampleState extends State<FormSample> {
         padding: EdgeInsets.all(8),
         child: Column(
           children: <Widget>[
+            const Text(
+              '''This data will be stored and will only be valid for 10 seconds. 
+              When you load the data after that it will not return''',
+            ),
             TextField(
               controller: _emailController,
               decoration: InputDecoration(

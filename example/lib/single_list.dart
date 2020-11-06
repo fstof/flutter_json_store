@@ -27,7 +27,6 @@ class SingleListSample extends StatefulWidget {
 
 class _SingleListSampleState extends State<SingleListSample> {
   List<Message> _messages = [];
-  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   Random _random = Random();
 
@@ -38,7 +37,7 @@ class _SingleListSampleState extends State<SingleListSample> {
   }
 
   _loadFromStorage() async {
-    Map<String, dynamic> json = await _jsonStore.getItem('messages');
+    Map<String, dynamic> json = await JsonStore().getItem('messages');
 
     _messages = json != null
         ? json['value'].map<Message>((messageJson) {
@@ -49,7 +48,7 @@ class _SingleListSampleState extends State<SingleListSample> {
   }
 
   _saveToStorage() async {
-    await _jsonStore.setItem('messages', {
+    await JsonStore().setItem('messages', {
       'value': _messages.map((message) {
         return message.toJson();
       }).toList()

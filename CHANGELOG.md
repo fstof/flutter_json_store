@@ -1,3 +1,9 @@
+## [1.2.0] - 2020-11-06
+
+- Update dependencies (including Flutter)
+- Add option to provide a location for the database file
+- [WARNING] Previously the default time to live was 365 days. This has now been changed to `null` which makes it never expire 
+
 ## [1.1.0] - 2020-06-15
 
 - Update dependencies

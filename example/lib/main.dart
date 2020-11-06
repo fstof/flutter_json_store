@@ -14,7 +14,10 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  // ensure singleton is instatiated
+  final _jsonStore = JsonStore(dbName: 'sampleapp');
   int _currentTab = 0;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -31,7 +34,7 @@ class _MyAppState extends State<MyApp> {
             IconButton(
               icon: Icon(Icons.refresh),
               onPressed: () async {
-                await JsonStore().clearDataBase();
+                await _jsonStore.clearDataBase();
               },
             )
           ],

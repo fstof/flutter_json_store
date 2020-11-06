@@ -29,7 +29,6 @@ class ListSample extends StatefulWidget {
 
 class _ListSampleState extends State<ListSample> {
   List<Message> _messages = [];
-  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   Random _random = Random();
 
@@ -41,7 +40,7 @@ class _ListSampleState extends State<ListSample> {
 
   _loadFromStorage() async {
     List<Map<String, dynamic>> json =
-        await _jsonStore.getListLike('messages-%');
+        await JsonStore().getListLike('messages-%');
 
     _messages = json != null
         ? json.map((messageJson) => Message.fromJson(messageJson)).toList()
@@ -56,24 +55,24 @@ class _ListSampleState extends State<ListSample> {
   }
 
   _deleteFromStorage() async {
-    await _jsonStore.deleteLike('messages-%');
+    await JsonStore().deleteLike('messages-%');
     await _loadFromStorage();
   }
 
   _saveToStorageWithBatch() async {
     var start = DateTime.now().millisecondsSinceEpoch;
     // It's always better to use the Batch in this case as its way more performant
-    Batch batch = await _jsonStore.startBatch();
+    Batch batch = await JsonStore().startBatch();
     await Future.forEach(_messages, (message) async {
       // _messages.forEach((message) async {
-      await _jsonStore.setItem(
+      await JsonStore().setItem(
         'messages-${message.id}',
         message.toJson(),
         batch: batch,
         encrypt: true,
       );
     });
-    await _jsonStore.commitBatch(batch);
+    await JsonStore().commitBatch(batch);
     var end = DateTime.now().millisecondsSinceEpoch;
     print(
         'time taken to store ${_messages.length} messages in a Batch: ${end - start}ms');
@@ -83,7 +82,7 @@ class _ListSampleState extends State<ListSample> {
   _saveToStorageWithoutBatch() async {
     var start = DateTime.now().millisecondsSinceEpoch;
     await Future.forEach(_messages, (message) async {
-      await _jsonStore.setItem(
+      await JsonStore().setItem(
         'messages-${message.id}',
         message.toJson(),
         encrypt: true,

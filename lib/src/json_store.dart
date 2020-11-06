@@ -27,23 +27,36 @@ class JsonStore {
   static const String _ivKey = 'iv';
   static const bool encryptByDefault = false;
 
-  JsonStore._createInstance(Database database, String dbName, bool inMemory) {
+  JsonStore._createInstance(
+    Database database,
+    Directory dbLocation,
+    String dbName,
+    bool inMemory,
+  ) {
     _secureStorage = SecureStorage();
 
     if (database != null) {
       _databaseFuture = Future.value(database);
     }
     if (_databaseFuture == null) {
-      _databaseFuture = _initialiseDatabase(dbName, inMemory);
+      _databaseFuture = _initialiseDatabase(dbLocation, dbName, inMemory);
     }
   }
 
-  factory JsonStore(
-      {Database database,
-      String dbName = 'json_store',
-      bool inMemory = false}) {
+  /// create instance of your singleton [JsonStore]
+  /// [database] If you need to supply your own database for whatever reason (maybe mocking or something)
+  /// [dbLocation] If you want to use a different location for the DB file (default: `ApplicationDocumentsDirectory`)
+  /// [dbName] Provide a custom database file name (default: `json_store`)
+  /// [inMemory] If you don't want to store to disk but rather have it all in memory (default: `false`)
+  factory JsonStore({
+    Database database,
+    Directory dbLocation,
+    String dbName = 'json_store',
+    bool inMemory = false,
+  }) {
     if (_instance == null) {
-      _instance = JsonStore._createInstance(database, dbName, inMemory);
+      _instance =
+          JsonStore._createInstance(database, dbLocation, dbName, inMemory);
     }
     return _instance;
   }
@@ -53,7 +66,11 @@ class JsonStore {
     await db.delete(_table);
   }
 
-  Future<Database> _initialiseDatabase(String dbName, bool inMemory) async {
+  Future<Database> _initialiseDatabase(
+    Directory dbLocation,
+    String dbName,
+    bool inMemory,
+  ) async {
     if (inMemory) {
       return openDatabase(
         inMemoryDatabasePath,
@@ -61,9 +78,11 @@ class JsonStore {
         onCreate: _createDb,
       );
     }
-    final Directory path = await getApplicationDocumentsDirectory();
+    if (dbLocation == null) {
+      dbLocation = await getApplicationDocumentsDirectory();
+    }
     return openDatabase(
-      '${path.path}/$dbName.db',
+      '${dbLocation.path}/$dbName.db',
       version: 1,
       onCreate: _createDb,
     );
@@ -82,9 +101,9 @@ class JsonStore {
   /// This function will create a [Batch] object, this allowed you to do some sort of transaction control.
   /// example:
   ///   var b = await jsonStore.startBatch();
-  ///   await jsonStore.set('key', value1, batch: b);
-  ///   await jsonStore.set('key', value2, batch: b);
-  ///   await jsonStore.set('key', value3, batch: b);
+  ///   await jsonStore.setItem('key', value1, batch: b);
+  ///   await jsonStore.setItem('key', value2, batch: b);
+  ///   await jsonStore.setItem('key', value3, batch: b);
   ///   await jsonStore.commitBatch(b);
   ///
   Future<Batch> startBatch() async {
@@ -98,11 +117,18 @@ class JsonStore {
 
   /// This function will store any data as a single json object in the database.
   /// We will try and update the key first and then insert if none exists
+  /// [key] the key of your item used to be retrieved later
+  /// [value] json Map of your value object
+  /// [encrypt] should the value be encrypted (default: [false])
+  /// [timeToLive] how long should the data be considered valid (default: [null])
+  /// If you [getItem] and the TTL has expired [null] will be returned and it will be removed from the database
+  /// if [timeToLive] is [null] the data will never expire
+  /// [batch] for transaction control where many [setItem] operations can be done in batch and commited at the end. see [startBatch]
   Future<void> setItem(
     String key,
     Map<String, dynamic> value, {
     bool encrypt = encryptByDefault,
-    Duration timeToLive = const Duration(days: 365),
+    Duration timeToLive,
     Batch batch,
   }) async {
     try {
@@ -111,7 +137,7 @@ class JsonStore {
         iv = IV.fromSecureRandom(IV_LENGTH);
       }
       final metadata = {
-        _timeToLiveKey: timeToLive.inMilliseconds,
+        _timeToLiveKey: timeToLive?.inMilliseconds,
         _encryptedKey: encrypt,
         _ivKey: (encrypt ? iv.base64 : null),
       };
@@ -168,7 +194,7 @@ class JsonStore {
     final Database db = await _databaseFuture;
     final List<Map<String, dynamic>> queryResult =
         await db.query(_table, where: 'key = ?', whereArgs: [key]);
-    return processQueryResult(key, queryResult, db);
+    return _processQueryResult(key, queryResult, db);
   }
 
 //Function that will retrieve a single json object from the database as a result of like query on the key.
@@ -176,10 +202,10 @@ class JsonStore {
     final Database db = await _databaseFuture;
     final List<Map<String, dynamic>> queryResult =
         await db.query(_table, where: 'key like ?', whereArgs: [key]);
-    return processQueryResult(key, queryResult, db);
+    return _processQueryResult(key, queryResult, db);
   }
 
-  Future<Map<String, dynamic>> processQueryResult(
+  Future<Map<String, dynamic>> _processQueryResult(
     String key,
     List<Map<String, dynamic>> queryResult,
     Database db,
@@ -191,7 +217,8 @@ class JsonStore {
           DateTime.fromMillisecondsSinceEpoch(row['lastUpdated'] as int);
       final timeLapsed = DateTime.now().millisecondsSinceEpoch -
           lastUpdated.millisecondsSinceEpoch;
-      if (timeLapsed > (metadata[_timeToLiveKey] as int)) {
+      final ttl = metadata[_timeToLiveKey];
+      if (ttl != null && timeLapsed > (ttl as int)) {
         await db.delete(_table, where: 'key = ?', whereArgs: [key]);
         return null;
       } else {
@@ -232,7 +259,8 @@ class JsonStore {
             DateTime.fromMillisecondsSinceEpoch(row['lastUpdated'] as int);
         final timeLapsed = DateTime.now().millisecondsSinceEpoch -
             lastUpdated.millisecondsSinceEpoch;
-        if (timeLapsed > (metadata[_timeToLiveKey] as int)) {
+        final ttl = metadata[_timeToLiveKey];
+        if (ttl != null && timeLapsed > (ttl as int)) {
           await db.delete(_table, where: 'key like ?', whereArgs: [key]);
           return null;
         } else {

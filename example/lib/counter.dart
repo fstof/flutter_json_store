@@ -16,7 +16,6 @@ class CounterSample extends StatefulWidget {
 
 class _CounterSampleState extends State<CounterSample> {
   CounterModel _counter = CounterModel(0);
-  JsonStore _jsonStore = JsonStore(dbName: 'sampleapp');
 
   @override
   void initState() {
@@ -25,19 +24,19 @@ class _CounterSampleState extends State<CounterSample> {
   }
 
   _loadFromStorage() async {
-    Map<String, dynamic> json = await _jsonStore.getItem('counter');
+    Map<String, dynamic> json = await JsonStore().getItem('counter');
     _counter = json != null ? CounterModel.fromJson(json) : CounterModel(0);
     setState(() {});
   }
 
   void _incrementCounter() async {
     setState(() => _counter.value++);
-    await _jsonStore.setItem('counter', _counter.toJson());
+    await JsonStore().setItem('counter', _counter.toJson(), encrypt: true);
   }
 
   void _decrementCounter() async {
     setState(() => _counter.value--);
-    await _jsonStore.setItem('counter', _counter.toJson());
+    await JsonStore().setItem('counter', _counter.toJson(), encrypt: true);
   }
 
   @override
