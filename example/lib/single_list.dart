@@ -72,12 +72,12 @@ class _SingleListSampleState extends State<SingleListSample> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                RaisedButton(
+                ElevatedButton(
                   child: Text('Load'),
                   onPressed: _loadFromStorage,
                 ),
                 SizedBox(width: 8),
-                RaisedButton(
+                ElevatedButton(
                   child: Text('Save'),
                   onPressed: _saveToStorage,
                 ),

@@ -251,7 +251,7 @@ class JsonStore {
         await db.query(_table, where: 'key like ?', whereArgs: [key]);
 
     if (queryResult != null && queryResult.isNotEmpty) {
-      List<Map<String, dynamic>> result = List<Map<String, dynamic>>();
+      List<Map<String, dynamic>> result = [];
       await Future.forEach(queryResult, (row) async {
         final Map<String, dynamic> metadata = json.decode(row['metadata']);
         final String value = row['value'];

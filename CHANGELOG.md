@@ -1,3 +1,7 @@
+## [1.3.0] - 2021-03-12
+
+- Update dependencies (including sdk now needs >=2.9.0 <3.0.0)
+
 ## [1.2.0] - 2020-11-06
 
 - Update dependencies (including Flutter)

@@ -52,19 +52,19 @@ class _MyAppState extends State<MyApp> {
           items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.add),
-              title: Text('Counter'),
+              label: 'Counter',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.format_bold),
-              title: Text('Basic'),
+              label: 'Basic',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.list),
-              title: Text('List'),
+              label: 'List',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.list),
-              title: Text('Single List'),
+              label: 'Single List',
             ),
           ],
         ),

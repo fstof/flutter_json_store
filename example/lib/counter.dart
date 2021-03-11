@@ -51,7 +51,7 @@ class _CounterSampleState extends State<CounterSample> {
             ),
             Text(
               '${_counter.value}',
-              style: Theme.of(context).textTheme.display1,
+              style: Theme.of(context).textTheme.headline4,
             ),
           ],
         ),

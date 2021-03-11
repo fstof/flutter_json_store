@@ -109,27 +109,27 @@ class _ListSampleState extends State<ListSample> {
             Wrap(
               direction: Axis.horizontal,
               children: <Widget>[
-                RaisedButton(
+                ElevatedButton(
                   child: Text('Generate 100'),
                   onPressed: _generate100,
                 ),
                 SizedBox(width: 8),
-                RaisedButton(
+                ElevatedButton(
                   child: Text('Load'),
                   onPressed: _loadFromStorage,
                 ),
                 SizedBox(width: 8),
-                RaisedButton(
+                ElevatedButton(
                   child: Text('Delete'),
                   onPressed: _deleteFromStorage,
                 ),
                 SizedBox(width: 8),
-                RaisedButton(
+                ElevatedButton(
                   child: Text('Save'),
                   onPressed: _saveToStorageWithoutBatch,
                 ),
                 SizedBox(width: 8),
-                RaisedButton(
+                ElevatedButton(
                   child: Text('Save batch'),
                   onPressed: _saveToStorageWithBatch,
                 ),
