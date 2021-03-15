@@ -6,20 +6,15 @@ import 'package:encrypt/encrypt.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'secure_storage.dart';
+import 'key_storage.dart';
 import 'store_exception.dart';
 
 class JsonStore {
   static JsonStore _instance;
 
-  static SecureStorage _secureStorage;
+  static KeyStorage _keyStorage;
   static Future<Database> _databaseFuture;
   static Encrypter _encrypter;
-  static Key _key;
-  static IV _iv;
-
-  static const IV_LENGTH = 8;
-  static const KEY_LENGTH = 32;
 
   static const String _table = 'json_store';
   static const String _timeToLiveKey = 'ttl';
@@ -33,7 +28,7 @@ class JsonStore {
     String dbName,
     bool inMemory,
   ) {
-    _secureStorage = SecureStorage();
+    _keyStorage = KeyStorage();
 
     if (database != null) {
       _databaseFuture = Future.value(database);
@@ -134,7 +129,7 @@ class JsonStore {
     try {
       IV iv;
       if (encrypt) {
-        iv = IV.fromSecureRandom(IV_LENGTH);
+        iv = IV.fromSecureRandom(KeyStorage.IV_LENGTH);
       }
       final metadata = {
         _timeToLiveKey: timeToLive?.inMilliseconds,
@@ -308,7 +303,7 @@ class JsonStore {
       Map<String, dynamic> value, bool encrypt, IV iv) async {
     if (encrypt) {
       if (iv == null) {
-        iv = await _getGlobalIV();
+        iv = await _keyStorage.getGlobalIV();
       }
       Encrypted encryptedValue = (await _getEncrypter()).encrypt(
         json.encode(value),
@@ -323,7 +318,7 @@ class JsonStore {
   Future<dynamic> _decodeJson(String value, bool encrypted, IV iv) async {
     if (encrypted) {
       if (iv == null) {
-        iv = await _getGlobalIV();
+        iv = await _keyStorage.getGlobalIV();
       }
       String decryptedValue = (await _getEncrypter()).decrypt(
         Encrypted.fromBase16(value),
@@ -337,47 +332,8 @@ class JsonStore {
 
   Future<Encrypter> _getEncrypter() async {
     if (_encrypter == null) {
-      _encrypter = Encrypter(Salsa20(await _getKey()));
+      _encrypter = Encrypter(Salsa20(await _keyStorage.getKey()));
     }
     return _encrypter;
-  }
-
-  Future<Key> _getKey() async {
-    if (_key == null) {
-      final keyMap = await _secureStorage.get('encryption_key');
-      if (keyMap == null) {
-        _key = Key.fromSecureRandom(KEY_LENGTH);
-        await _secureStorage.set('encryption_key', {'value': _key.base64});
-      } else {
-        String value = keyMap['value'];
-        // For backward compatibility
-        if (value.length == 32) {
-          _key = Key.fromUtf8(value);
-        } else {
-          _key = Key.fromBase64(value);
-        }
-      }
-    }
-    return _key;
-  }
-
-  Future<IV> _getGlobalIV() async {
-    if (_iv == null) {
-      final ivMap = await _secureStorage.get('encryption_iv');
-      if (ivMap == null) {
-        IV iv = IV.fromSecureRandom(IV_LENGTH);
-        await _secureStorage.set('encryption_iv', {'value': iv.base64});
-        _iv = iv;
-      } else {
-        String value = ivMap['value'];
-        // For backward compatibility
-        if (value.length == 8) {
-          _iv = IV.fromUtf8(value);
-        } else {
-          _iv = IV.fromBase64(value);
-        }
-      }
-    }
-    return _iv;
   }
 }
