@@ -1,3 +1,9 @@
+## [1.4.0] - 2021-03-15
+
+- Fix dependencies to NOT include sdk 2.12 ones
+- It's been reported that apps using background processes using this cannot access encrypted data
+  - Changed the default IOS Accessability option to `IOSAccessibility.first_unlock_this_device`
+
 ## [1.3.0] - 2021-03-12
 
 - Update dependencies (including sdk now needs >=2.9.0 <3.0.0)

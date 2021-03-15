@@ -17,11 +17,22 @@ class SecureStorage {
 
   Future<void> set(String key, Map<String, dynamic> value) async {
     final String jsonString = json.encode(value);
-    return _storage.write(key: key, value: jsonString);
+    return _storage.write(
+      key: key,
+      value: jsonString,
+      iOptions: IOSOptions(
+        accessibility: IOSAccessibility.first_unlock_this_device,
+      ),
+    );
   }
 
   Future<Map<String, dynamic>> get(String key) async {
-    final value = await _storage.read(key: key);
+    final value = await _storage.read(
+      key: key,
+      iOptions: IOSOptions(
+        accessibility: IOSAccessibility.first_unlock_this_device,
+      ),
+    );
     if (value != null) {
       final Map<String, dynamic> parsedValue = json.decode(value);
       return parsedValue;
