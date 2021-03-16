@@ -39,7 +39,7 @@ class KeyStorage {
     }
 
     final Map<String, dynamic> keyMap = json.decode(
-      await _storage.read(key: _keyKey, iOptions: _iOptions),
+      (await _storage.read(key: _keyKey, iOptions: _iOptions))!,
     );
 
     Key key;
@@ -78,7 +78,7 @@ class KeyStorage {
     }
 
     final Map<String, dynamic> ivMap = json.decode(
-      await _storage.read(key: _ivKey, iOptions: _iOptions),
+      (await _storage.read(key: _ivKey, iOptions: _iOptions))!,
     );
 
     IV iv;
