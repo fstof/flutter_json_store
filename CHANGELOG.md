@@ -1,3 +1,7 @@
+## [2.0.0-nullsafety.0] - 2021-05-13
+
+- Update to null safety
+
 ## [1.4.0] - 2021-03-15
 
 - Fix dependencies to NOT include sdk 2.12 ones
