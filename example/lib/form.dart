@@ -23,13 +23,15 @@ class _FormSampleState extends State<FormSample> {
 
   _loadFromStorage() async {
     final json = await JsonStore().getItem('user');
-    if (json != null) {
-      setState(() {
+    setState(() {
+      if (json != null) {
         _user = UserModel.fromJson(json);
-        _emailController.text = _user!.email;
-        _passwordController.text = _user!.password;
-      });
-    }
+      } else {
+        _user = null;
+      }
+      _emailController.text = _user?.email ?? '';
+      _passwordController.text = _user?.password ?? '';
+    });
   }
 
   _saveToStorage() async {
