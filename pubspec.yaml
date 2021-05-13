@@ -1,6 +1,8 @@
 name: json_store
 description: A Flutter storage solution somewhat similar to a browser's localStorage (but super powered)
 version: 2.0.0-nullsafety.0
+repository: https://github.com/fstof/flutter_json_store
+issue_tracker: https://github.com/fstof/flutter_json_store/issues
 homepage: https://github.com/fstof/flutter_json_store
 
 environment:
