@@ -4,25 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:json_store/json_store.dart';
 import 'package:sqflite/sqlite_api.dart';
 
-class Message {
-  final int id;
-  final String title;
-  final String body;
-
-  Message([this.id, this.title, this.body]);
-  Message.fromJson(Map<String, dynamic> json)
-      : this.id = json['id'],
-        this.title = json['title'],
-        this.body = json['body'];
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'body': body,
-      };
-}
+import 'model.dart';
 
 class ListSample extends StatefulWidget {
-  ListSample({Key key}) : super(key: key);
+  ListSample({Key? key}) : super(key: key);
   @override
   _ListSampleState createState() => _ListSampleState();
 }
@@ -39,11 +24,11 @@ class _ListSampleState extends State<ListSample> {
   }
 
   _loadFromStorage() async {
-    List<Map<String, dynamic>> json =
+    List<Map<String, dynamic>?>? json =
         await JsonStore().getListLike('messages-%');
 
     _messages = json != null
-        ? json.map((messageJson) => Message.fromJson(messageJson)).toList()
+        ? json.map((messageJson) => Message.fromJson(messageJson!)).toList()
         : [];
     setState(() {});
   }
@@ -63,7 +48,7 @@ class _ListSampleState extends State<ListSample> {
     var start = DateTime.now().millisecondsSinceEpoch;
     // It's always better to use the Batch in this case as its way more performant
     Batch batch = await JsonStore().startBatch();
-    await Future.forEach(_messages, (message) async {
+    await Future.forEach(_messages, (dynamic message) async {
       // _messages.forEach((message) async {
       await JsonStore().setItem(
         'messages-${message.id}',
@@ -81,7 +66,7 @@ class _ListSampleState extends State<ListSample> {
 
   _saveToStorageWithoutBatch() async {
     var start = DateTime.now().millisecondsSinceEpoch;
-    await Future.forEach(_messages, (message) async {
+    await Future.forEach(_messages, (dynamic message) async {
       await JsonStore().setItem(
         'messages-${message.id}',
         message.toJson(),

@@ -136,9 +136,12 @@ class JsonStore {
       if (doCommit) {
         await commitBatch(batch);
       }
-    } catch (error, stack) {
+    } catch (error, stackTrace) {
       throw StorageException(
-          'error setting value with key: $key', error, stack);
+        'error setting value with key: $key',
+        causedBy: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:json_store/json_store.dart';
 
-class CounterModel {
-  int value;
-  CounterModel(this.value);
-  CounterModel.fromJson(Map<String, dynamic> json) : this.value = json['value'];
-  Map<String, dynamic> toJson() => {'value': value};
-}
+import 'model.dart';
 
 class CounterSample extends StatefulWidget {
-  CounterSample({Key key}) : super(key: key);
+  CounterSample({Key? key}) : super(key: key);
   @override
   _CounterSampleState createState() => _CounterSampleState();
 }
@@ -24,7 +19,7 @@ class _CounterSampleState extends State<CounterSample> {
   }
 
   _loadFromStorage() async {
-    Map<String, dynamic> json = await JsonStore().getItem('counter');
+    Map<String, dynamic>? json = await JsonStore().getItem('counter');
     _counter = json != null ? CounterModel.fromJson(json) : CounterModel(0);
     setState(() {});
   }

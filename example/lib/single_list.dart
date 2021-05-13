@@ -3,24 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:json_store/json_store.dart';
 
-class Message {
-  final int id;
-  final String title;
-  final String body;
-  Message([this.id, this.title, this.body]);
-  Message.fromJson(Map<String, dynamic> json)
-      : this.id = json['id'],
-        this.title = json['title'],
-        this.body = json['body'];
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'body': body,
-      };
-}
+import 'model.dart';
 
 class SingleListSample extends StatefulWidget {
-  SingleListSample({Key key}) : super(key: key);
+  SingleListSample({Key? key}) : super(key: key);
   @override
   _SingleListSampleState createState() => _SingleListSampleState();
 }
@@ -37,7 +23,7 @@ class _SingleListSampleState extends State<SingleListSample> {
   }
 
   _loadFromStorage() async {
-    Map<String, dynamic> json = await JsonStore().getItem('messages');
+    Map<String, dynamic>? json = await JsonStore().getItem('messages');
 
     _messages = json != null
         ? json['value'].map<Message>((messageJson) {
