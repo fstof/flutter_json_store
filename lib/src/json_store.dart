@@ -10,11 +10,11 @@ import 'key_storage.dart';
 import 'store_exception.dart';
 
 class JsonStore {
-  static JsonStore _instance;
+  static JsonStore? _instance;
 
-  static KeyStorage _keyStorage;
-  static Future<Database> _databaseFuture;
-  static Encrypter _encrypter;
+  final KeyStorage _keyStorage;
+  late final Future<Database> _databaseFuture;
+  Encrypter? _encrypter;
 
   static const String _table = 'json_store';
   static const String _timeToLiveKey = 'ttl';
@@ -23,19 +23,14 @@ class JsonStore {
   static const bool encryptByDefault = false;
 
   JsonStore._createInstance(
-    Database database,
-    Directory dbLocation,
+    Database? database,
+    Directory? dbLocation,
     String dbName,
     bool inMemory,
-  ) {
-    _keyStorage = KeyStorage();
-
-    if (database != null) {
-      _databaseFuture = Future.value(database);
-    }
-    if (_databaseFuture == null) {
-      _databaseFuture = _initialiseDatabase(dbLocation, dbName, inMemory);
-    }
+  ) : _keyStorage = KeyStorage() {
+    _databaseFuture = database != null
+        ? Future.value(database)
+        : _initialiseDatabase(dbLocation, dbName, inMemory);
   }
 
   /// create instance of your singleton [JsonStore]
@@ -44,17 +39,13 @@ class JsonStore {
   /// [dbName] Provide a custom database file name (default: `json_store`)
   /// [inMemory] If you don't want to store to disk but rather have it all in memory (default: `false`)
   factory JsonStore({
-    Database database,
-    Directory dbLocation,
+    Database? database,
+    Directory? dbLocation,
     String dbName = 'json_store',
     bool inMemory = false,
-  }) {
-    if (_instance == null) {
-      _instance =
+  }) =>
+      _instance ??=
           JsonStore._createInstance(database, dbLocation, dbName, inMemory);
-    }
-    return _instance;
-  }
 
   Future<void> clearDataBase() async {
     final Database db = await _databaseFuture;
@@ -62,7 +53,7 @@ class JsonStore {
   }
 
   Future<Database> _initialiseDatabase(
-    Directory dbLocation,
+    Directory? dbLocation,
     String dbName,
     bool inMemory,
   ) async {
@@ -73,9 +64,7 @@ class JsonStore {
         onCreate: _createDb,
       );
     }
-    if (dbLocation == null) {
-      dbLocation = await getApplicationDocumentsDirectory();
-    }
+    dbLocation ??= await getApplicationDocumentsDirectory();
     return openDatabase(
       '${dbLocation.path}/$dbName.db',
       version: 1,
@@ -123,18 +112,18 @@ class JsonStore {
     String key,
     Map<String, dynamic> value, {
     bool encrypt = encryptByDefault,
-    Duration timeToLive,
-    Batch batch,
+    Duration? timeToLive,
+    Batch? batch,
   }) async {
     try {
-      IV iv;
+      IV? iv;
       if (encrypt) {
         iv = IV.fromSecureRandom(KeyStorage.IV_LENGTH);
       }
       final metadata = {
         _timeToLiveKey: timeToLive?.inMilliseconds,
         _encryptedKey: encrypt,
-        _ivKey: (encrypt ? iv.base64 : null),
+        _ivKey: iv?.base64,
       };
       bool doCommit = false;
       if (batch == null) {
@@ -147,12 +136,16 @@ class JsonStore {
       if (doCommit) {
         await commitBatch(batch);
       }
-    } catch (error) {
-      throw StorageException('error setting value with key: $key', error);
+    } catch (error, stackTrace) {
+      throw StorageException(
+        'error setting value with key: $key',
+        causedBy: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  Future<void> deleteItem(String key, {Batch batch}) async {
+  Future<void> deleteItem(String key, {Batch? batch}) async {
     bool doCommit = false;
     if (batch == null) {
       doCommit = true;
@@ -166,7 +159,7 @@ class JsonStore {
     }
   }
 
-  Future<void> deleteLike(String key, {Batch batch}) async {
+  Future<void> deleteLike(String key, {Batch? batch}) async {
     bool doCommit = false;
     if (batch == null) {
       doCommit = true;
@@ -185,7 +178,7 @@ class JsonStore {
   }
 
   /// Function that will retrieve a single json object from the database.
-  Future<Map<String, dynamic>> getItem(String key) async {
+  Future<Map<String, dynamic>?> getItem(String key) async {
     final Database db = await _databaseFuture;
     final List<Map<String, dynamic>> queryResult =
         await db.query(_table, where: 'key = ?', whereArgs: [key]);
@@ -193,19 +186,19 @@ class JsonStore {
   }
 
 //Function that will retrieve a single json object from the database as a result of like query on the key.
-  Future<Map<String, dynamic>> getItemLike(String key) async {
+  Future<Map<String, dynamic>?> getItemLike(String key) async {
     final Database db = await _databaseFuture;
     final List<Map<String, dynamic>> queryResult =
         await db.query(_table, where: 'key like ?', whereArgs: [key]);
     return _processQueryResult(key, queryResult, db);
   }
 
-  Future<Map<String, dynamic>> _processQueryResult(
+  Future<Map<String, dynamic>?> _processQueryResult(
     String key,
     List<Map<String, dynamic>> queryResult,
     Database db,
   ) async {
-    if (queryResult != null && queryResult.isNotEmpty) {
+    if (queryResult.isNotEmpty) {
       final Map<String, dynamic> row = queryResult[0];
       final Map<String, dynamic> metadata = json.decode(row['metadata']);
       final DateTime lastUpdated =
@@ -239,15 +232,15 @@ class JsonStore {
   ///   | message-1 | ...   |
   ///   | message-2 | ...   |
   ///   | message-3 | ...   |
-  Future<List<Map<String, dynamic>>> getListLike(String key) async {
+  Future<List<Map<String, dynamic>>?> getListLike(String key) async {
     final Database db = await _databaseFuture;
 
     final List<Map<String, dynamic>> queryResult =
         await db.query(_table, where: 'key like ?', whereArgs: [key]);
 
-    if (queryResult != null && queryResult.isNotEmpty) {
+    if (queryResult.isNotEmpty) {
       List<Map<String, dynamic>> result = [];
-      await Future.forEach(queryResult, (row) async {
+      await Future.forEach(queryResult, (Map<String, dynamic> row) async {
         final Map<String, dynamic> metadata = json.decode(row['metadata']);
         final String value = row['value'];
         final DateTime lastUpdated =
@@ -300,11 +293,12 @@ class JsonStore {
   }
 
   Future<String> _encodeJson(
-      Map<String, dynamic> value, bool encrypt, IV iv) async {
+    Map<String, dynamic> value,
+    bool encrypt,
+    IV? iv,
+  ) async {
     if (encrypt) {
-      if (iv == null) {
-        iv = await _keyStorage.getGlobalIV();
-      }
+      iv ??= await _keyStorage.getGlobalIV();
       Encrypted encryptedValue = (await _getEncrypter()).encrypt(
         json.encode(value),
         iv: iv,
@@ -315,11 +309,13 @@ class JsonStore {
     return json.encode(value);
   }
 
-  Future<dynamic> _decodeJson(String value, bool encrypted, IV iv) async {
+  Future<dynamic> _decodeJson(
+    String value,
+    bool encrypted,
+    IV? iv,
+  ) async {
     if (encrypted) {
-      if (iv == null) {
-        iv = await _keyStorage.getGlobalIV();
-      }
+      iv ??= await _keyStorage.getGlobalIV();
       String decryptedValue = (await _getEncrypter()).decrypt(
         Encrypted.fromBase16(value),
         iv: iv,
@@ -331,9 +327,6 @@ class JsonStore {
   }
 
   Future<Encrypter> _getEncrypter() async {
-    if (_encrypter == null) {
-      _encrypter = Encrypter(Salsa20(await _keyStorage.getKey()));
-    }
-    return _encrypter;
+    return _encrypter ??= Encrypter(Salsa20(await _keyStorage.getKey()));
   }
 }

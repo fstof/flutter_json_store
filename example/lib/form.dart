@@ -1,27 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:json_store/json_store.dart';
 
-class UserModel {
-  String email;
-  String password;
-  UserModel([this.email, this.password]);
-  UserModel.fromJson(Map<String, dynamic> json)
-      : this.email = json['email'],
-        this.password = json['password'];
-  Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-      };
-}
+import 'model.dart';
 
 class FormSample extends StatefulWidget {
-  FormSample({Key key}) : super(key: key);
+  FormSample({Key? key}) : super(key: key);
   @override
   _FormSampleState createState() => _FormSampleState();
 }
 
 class _FormSampleState extends State<FormSample> {
-  UserModel _user = UserModel();
+  UserModel? _user;
 
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
@@ -33,19 +22,23 @@ class _FormSampleState extends State<FormSample> {
   }
 
   _loadFromStorage() async {
-    Map<String, dynamic> json = await JsonStore().getItem('user');
-    _user = json != null ? UserModel.fromJson(json) : UserModel();
-    _emailController.text = _user.email;
-    _passwordController.text = _user.password;
-    setState(() {});
+    final json = await JsonStore().getItem('user');
+    setState(() {
+      if (json != null) {
+        _user = UserModel.fromJson(json);
+      } else {
+        _user = null;
+      }
+      _emailController.text = _user?.email ?? '';
+      _passwordController.text = _user?.password ?? '';
+    });
   }
 
   _saveToStorage() async {
-    _user.email = _emailController.text;
-    _user.password = _passwordController.text;
+    _user = UserModel(_emailController.text, _passwordController.text);
     await JsonStore().setItem(
       'user',
-      _user.toJson(),
+      _user!.toJson(),
       timeToLive: Duration(seconds: 10),
     );
     setState(() {});
@@ -90,8 +83,8 @@ class _FormSampleState extends State<FormSample> {
                 ),
               ],
             ),
-            Text('Email: ${_user.email}'),
-            Text('Password: ${_user.password}'),
+            Text('Email: ${_user?.email}'),
+            Text('Password: ${_user?.password}'),
           ],
         ),
       ),
