@@ -1,3 +1,7 @@
+## [2.0.0] - 2022-08-16
+
+- Bump version
+
 ## [2.0.0-nullsafety.0] - 2021-05-13
 
 - Update to null safety
