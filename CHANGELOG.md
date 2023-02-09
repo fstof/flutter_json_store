@@ -1,3 +1,8 @@
+## [2.0.1] - 2023-02-09
+
+- Update dependencies
+  - Most notably `flutter_secure_storage` is now at ^8.0.0
+
 ## [2.0.0] - 2022-08-16
 
 - Bump version

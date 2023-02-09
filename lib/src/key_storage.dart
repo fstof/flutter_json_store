@@ -11,7 +11,7 @@ class KeyStorage {
 
   final _storage = new FlutterSecureStorage();
   static final _iOptions = IOSOptions(
-    accessibility: IOSAccessibility.first_unlock_this_device,
+    accessibility: KeychainAccessibility.first_unlock_this_device,
   );
 
   Future<Key> getKey() async {
